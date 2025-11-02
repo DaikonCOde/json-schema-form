@@ -33,7 +33,18 @@ describe('createHeadlessForm', () => {
 
     it('should not log error when other valid options are provided', () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
-      createHeadlessForm(basicSchema, {
+      const schemaWithInputType: JsfObjectSchema = {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            'x-jsf-presentation': {
+              inputType: 'text',
+            },
+          },
+        },
+      }
+      createHeadlessForm(schemaWithInputType, {
         initialValues: { name: 'test' },
         legacyOptions: {},
         strictInputType: true,

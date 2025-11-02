@@ -1,6 +1,6 @@
 import type { ValidationError, ValidationErrorPath } from './errors'
 import type { Field } from './field/type'
-import type { JsfObjectSchema, JsfSchema, SchemaValue } from './types'
+import type { AsyncOptionsLoader, JsfLayoutConfig, JsfObjectSchema, JsfSchema, ObjectValue, SchemaValue } from './types'
 import type { LegacyOptions } from './validation/schema'
 import { getErrorMessage } from './errors/messages'
 import { buildFieldSchema } from './field/schema'
@@ -15,6 +15,7 @@ interface FormResult {
   isError: boolean
   error: string | null
   handleValidation: (value: SchemaValue) => ValidationResult
+  layout?: JsfLayoutConfig | null
 }
 
 /**
@@ -234,18 +235,57 @@ export interface CreateHeadlessFormOptions {
    * Custom user defined functions. A dictionary of name and function
    */
   customJsonLogicOps?: Record<string, (...args: any[]) => any>
+
+  /**
+   * Async option loaders for select fields.
+   * Maps loader IDs (from schema's asyncOptions.id) to loader functions.
+   * 
+   * @example
+   * ```ts
+   * {
+   *   'countries-loader': async (context) => {
+   *     const response = await fetch('/api/countries')
+   *     return { options: await response.json() }
+   *   }
+   * }
+   * ```
+   */
+  asyncLoaders?: Record<string, AsyncOptionsLoader>
 }
 
-function buildFields(params: { schema: JsfObjectSchema, originalSchema: JsfObjectSchema, strictInputType?: boolean }): Field[] {
-  const { schema, originalSchema, strictInputType } = params
-  const fields = buildFieldSchema({
+function buildFields(params: {
+  schema: JsfObjectSchema
+  originalSchema: JsfObjectSchema
+  strictInputType?: boolean
+  asyncLoaders?: Record<string, AsyncOptionsLoader>
+  formValues?: ObjectValue
+}): { fields: Field[], layout?: JsfLayoutConfig | null } {
+  const { schema, originalSchema, strictInputType, asyncLoaders, formValues } = params
+  const rootField = buildFieldSchema({
     schema,
     name: 'root',
     required: true,
     originalSchema,
     strictInputType,
-  })?.fields || []
-  return fields
+    asyncLoaders,
+    formValues,
+  })
+
+  const fields = rootField?.fields || []
+  const layout = rootField?.layout || null
+
+  // If there's layout configuration at the root level, add it to all fields
+  // This allows UI libraries to access the container layout information
+  if (layout && fields.length > 0) {
+    // Add the root layout as a special property to make it accessible
+    fields.forEach((field) => {
+      if (!field._rootLayout) {
+        field._rootLayout = layout
+      }
+    })
+  }
+
+  return { fields, layout }
 }
 
 /**
@@ -280,6 +320,7 @@ export function createHeadlessForm(
   validateOptions(options)
   const initialValues = options.initialValues || {}
   const strictInputType = options.strictInputType || false
+  const asyncLoaders = options.asyncLoaders || {}
   // Make a new version of the schema with all the computed attrs applied, as well as the final version of each property (taking into account conditional rules)
   const updatedSchema = calculateFinalSchema({
     schema,
@@ -287,7 +328,13 @@ export function createHeadlessForm(
     options: options.legacyOptions,
   })
 
-  const fields = buildFields({ schema: updatedSchema, originalSchema: schema, strictInputType })
+  const { fields, layout } = buildFields({
+    schema: updatedSchema,
+    originalSchema: schema,
+    strictInputType,
+    asyncLoaders,
+    formValues: initialValues as ObjectValue,
+  })
 
   // TODO: check if we need this isError variable exposed
   const isError = false
@@ -320,5 +367,6 @@ export function createHeadlessForm(
     isError,
     error: null,
     handleValidation,
+    layout,
   }
 }

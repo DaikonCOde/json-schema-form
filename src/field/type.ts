@@ -1,4 +1,4 @@
-import type { JsfSchemaType } from '../types'
+import type { AsyncOptionsConfig, AsyncOptionsLoader, JsfSchemaType, ObjectValue } from '../types'
 
 /**
  * WIP type for UI field output that allows for all `x-jsf-presentation` properties to be splatted
@@ -28,6 +28,75 @@ export interface Field {
   const?: unknown
   checkboxValue?: unknown
   default?: unknown
+
+  // Async options configuration and loader
+  asyncOptions?: AsyncOptionsConfig & {
+    /**
+     * Direct access to the loader function.
+     * Call it with a context object containing formValues.
+     * 
+     * @example
+     * ```ts
+     * // Simple usage
+     * const result = await field.asyncOptions.loader({
+     *   search: 'query',
+     *   formValues: currentFormValues,
+     * })
+     * 
+     * // With pagination
+     * const result = await field.asyncOptions.loader({
+     *   search: 'query',
+     *   pagination: { page: 2 },
+     *   formValues: currentFormValues,
+     * })
+     * ```
+     */
+    loader?: AsyncOptionsLoader
+  }
+
+  // Layout properties from x-jsf-layout
+  layout?: {
+    type?: 'columns'
+    columns?: number
+    gap?: string
+    responsive?: {
+      sm?: number
+      md?: number
+      lg?: number
+      xl?: number
+    }
+    colSpan?: number | {
+      sm?: number
+      md?: number
+      lg?: number
+      xl?: number
+    }
+    colStart?: number | {
+      sm?: number
+      md?: number
+      lg?: number
+      xl?: number
+    }
+    colEnd?: number | {
+      sm?: number
+      md?: number
+      lg?: number
+      xl?: number
+    }
+  }
+  
+  // Internal property to store root container layout information
+  _rootLayout?: {
+    type?: 'columns'
+    columns?: number
+    gap?: string
+    responsive?: {
+      sm?: number
+      md?: number
+      lg?: number
+      xl?: number
+    }
+  }
 
   // Allow additional properties from x-jsf-presentation (e.g. meta from oneOf/anyOf)
   [key: string]: unknown

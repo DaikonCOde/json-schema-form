@@ -1,4 +1,4 @@
-import type { JsfObjectSchema, JsfSchema, JsfSchemaType, NonBooleanJsfSchema, SchemaValue } from '../types'
+import type { AsyncOptionsLoader, JsfObjectSchema, JsfSchema, JsfSchemaType, NonBooleanJsfSchema, ObjectValue, SchemaValue } from '../types'
 import type { Field, FieldOption, FieldType } from './type'
 import deepmerge from 'deepmerge'
 import { setCustomOrder } from '../custom/order'
@@ -45,13 +45,22 @@ function addOptions(field: Field, schema: NonBooleanJsfSchema) {
  * @param schema - The schema of the field
  * @param originalSchema - The original schema (needed for calculating the original input type on conditionally hidden fields)
  * @param strictInputType - Whether to strictly enforce the input type
+ * @param asyncLoaders - Optional map of async option loaders
+ * @param formValues - Current form values for dependent async options
  * @description
  * This adds the fields attribute to based on the schema's items.
  * Since options and fields are mutually exclusive, we only add fields if no options were provided.
  */
-function addFields(field: Field, schema: NonBooleanJsfSchema, originalSchema: JsfSchema, strictInputType?: boolean) {
-  if (field.options === undefined) {
-    const fields = getFields(schema, originalSchema, strictInputType)
+function addFields(
+  field: Field,
+  schema: NonBooleanJsfSchema,
+  originalSchema: JsfSchema,
+  strictInputType?: boolean,
+  asyncLoaders?: Record<string, AsyncOptionsLoader>,
+  formValues?: ObjectValue,
+) {
+  if (field.options === undefined && field.asyncOptions === undefined) {
+    const fields = getFields(schema, originalSchema, strictInputType, asyncLoaders, formValues)
     if (fields) {
       field.fields = fields
     }
@@ -213,9 +222,17 @@ function getFieldOptions(schema: NonBooleanJsfSchema) {
  * @param schema - The schema of the field
  * @param originalSchema - The original schema (needed for calculating the original input type on conditionally hidden fields)
  * @param strictInputType - Whether to strictly enforce the input type
+ * @param asyncLoaders - Optional map of async option loaders
+ * @param formValues - Current form values for dependent async options
  * @returns The fields for the schema or an empty array if the schema does not define any properties
  */
-function getObjectFields(schema: NonBooleanJsfSchema, originalSchema: NonBooleanJsfSchema, strictInputType?: boolean): Field[] | null {
+function getObjectFields(
+  schema: NonBooleanJsfSchema,
+  originalSchema: NonBooleanJsfSchema,
+  strictInputType?: boolean,
+  asyncLoaders?: Record<string, AsyncOptionsLoader>,
+  formValues?: ObjectValue,
+): Field[] | null {
   const fields: Field[] = []
 
   for (const key in schema.properties) {
@@ -226,6 +243,8 @@ function getObjectFields(schema: NonBooleanJsfSchema, originalSchema: NonBoolean
       required: isRequired,
       originalSchema: originalSchema.properties?.[key] || schema.properties[key],
       strictInputType,
+      asyncLoaders,
+      formValues,
     })
     if (field) {
       fields.push(field)
@@ -242,9 +261,17 @@ function getObjectFields(schema: NonBooleanJsfSchema, originalSchema: NonBoolean
  * @param schema - The schema of the field
  * @param originalSchema - The original schema (needed for calculating the original input type on conditionally hidden fields)
  * @param strictInputType - Whether to strictly enforce the input type
+ * @param asyncLoaders - Optional map of async option loaders
+ * @param formValues - Current form values for dependent async options
  * @returns The fields for the schema or an empty array if the schema does not define any items
  */
-function getArrayFields(schema: NonBooleanJsfSchema, originalSchema: NonBooleanJsfSchema, strictInputType?: boolean): Field[] {
+function getArrayFields(
+  schema: NonBooleanJsfSchema,
+  originalSchema: NonBooleanJsfSchema,
+  strictInputType?: boolean,
+  asyncLoaders?: Record<string, AsyncOptionsLoader>,
+  formValues?: ObjectValue,
+): Field[] {
   const fields: Field[] = []
 
   if (typeof schema.items !== 'object' || schema.items === null) {
@@ -262,6 +289,8 @@ function getArrayFields(schema: NonBooleanJsfSchema, originalSchema: NonBooleanJ
         required: isFieldRequired,
         originalSchema,
         strictInputType,
+        asyncLoaders,
+        formValues,
       })
       if (field) {
         field.nameKey = key
@@ -276,6 +305,8 @@ function getArrayFields(schema: NonBooleanJsfSchema, originalSchema: NonBooleanJ
       required: false,
       originalSchema,
       strictInputType,
+      asyncLoaders,
+      formValues,
     })
     if (field) {
       fields.push(field)
@@ -292,14 +323,22 @@ function getArrayFields(schema: NonBooleanJsfSchema, originalSchema: NonBooleanJ
  * @param schema - The schema of the field
  * @param originalSchema - The original schema (needed for calculating the original input type on conditionally hidden fields)
  * @param strictInputType - Whether to strictly enforce the input type
+ * @param asyncLoaders - Optional map of async option loaders
+ * @param formValues - Current form values for dependent async options
  * @returns The fields for the schema
  */
-function getFields(schema: NonBooleanJsfSchema, originalSchema: NonBooleanJsfSchema, strictInputType?: boolean): Field[] | null {
+function getFields(
+  schema: NonBooleanJsfSchema,
+  originalSchema: NonBooleanJsfSchema,
+  strictInputType?: boolean,
+  asyncLoaders?: Record<string, AsyncOptionsLoader>,
+  formValues?: ObjectValue,
+): Field[] | null {
   if (typeof schema.properties === 'object' && schema.properties !== null) {
-    return getObjectFields(schema, originalSchema, strictInputType)
+    return getObjectFields(schema, originalSchema, strictInputType, asyncLoaders, formValues)
   }
   else if (typeof schema.items === 'object' && schema.items !== null) {
-    return getArrayFields(schema, originalSchema, strictInputType)
+    return getArrayFields(schema, originalSchema, strictInputType, asyncLoaders, formValues)
   }
 
   return null
@@ -313,6 +352,7 @@ const excludedSchemaProps = [
   'type', // Handled separately
   'x-jsf-errorMessage', // Handled separately
   'x-jsf-presentation', // Handled separately
+  'x-jsf-layout', // Handled separately
   'oneOf', // Transformed to 'options'
   'anyOf', // Transformed to 'options'
   'properties', // Handled separately
@@ -325,6 +365,8 @@ interface BuildFieldSchemaParams {
   originalSchema: NonBooleanJsfSchema
   strictInputType?: boolean
   type?: JsfSchemaType
+  asyncLoaders?: Record<string, AsyncOptionsLoader>
+  formValues?: ObjectValue
 }
 
 /**
@@ -336,6 +378,8 @@ interface BuildFieldSchemaParams {
  * @param params.originalSchema - The original schema (needed for calculating the original input type on conditionally hidden fields)
  * @param params.strictInputType - Whether to strictly enforce the input type
  * @param params.type - The schema type
+ * @param params.asyncLoaders - Optional map of async option loaders
+ * @param params.formValues - Current form values for dependent async options
  * @returns The field
  */
 export function buildFieldSchema({
@@ -345,6 +389,8 @@ export function buildFieldSchema({
   originalSchema,
   strictInputType = false,
   type = undefined,
+  asyncLoaders = {},
+  formValues = {},
 }: BuildFieldSchemaParams): Field | null {
   // If schema is boolean false, return a field with isVisible=false
   if (schema === false) {
@@ -373,6 +419,12 @@ export function buildFieldSchema({
   const originalSchemaPresentation = originalSchema['x-jsf-presentation'] || {}
   const schemaPresentation = schema['x-jsf-presentation'] || {}
   const presentation = deepmerge(originalSchemaPresentation, schemaPresentation, { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray })
+  
+  // Handle layout configuration
+  const originalLayoutConfig = originalSchema['x-jsf-layout']
+  const schemaLayoutConfig = schema['x-jsf-layout']
+  const layoutConfig = schemaLayoutConfig || originalLayoutConfig
+  
   const errorMessage = schema['x-jsf-errorMessage']
 
   // Get input type from presentation or fallback to schema type
@@ -392,6 +444,7 @@ export function buildFieldSchema({
     required,
     isVisible: true,
     ...(errorMessage && { errorMessage }),
+    ...(layoutConfig && { layout: layoutConfig }),
   }
 
   if (inputType === 'checkbox') {
@@ -405,8 +458,8 @@ export function buildFieldSchema({
   // Spread presentation properties to the root level
   if (Object.keys(presentation).length > 0) {
     Object.entries(presentation).forEach(([key, value]) => {
-      // inputType is already handled above
-      if (key === 'inputType') {
+      // inputType and asyncOptions are handled separately
+      if (key === 'inputType' || key === 'asyncOptions') {
         return
       }
 
@@ -418,7 +471,26 @@ export function buildFieldSchema({
     addOptions(field, schema)
   }
 
-  addFields(field, schema, originalSchema)
+  // Add async options configuration if present
+  const asyncOptionsConfig = presentation.asyncOptions
+  if (asyncOptionsConfig && asyncOptionsConfig.id) {
+    const loader = asyncLoaders?.[asyncOptionsConfig.id]
+    
+    if (loader !== undefined) {
+      // Expose the loader directly for maximum flexibility
+      field.asyncOptions = {
+        ...asyncOptionsConfig,
+        loader,  // Direct access to the loader function
+      }
+    }
+    else {
+      // If loader is not provided, keep the config but without the bound function
+      // This allows the UI to know async options are configured even if loader is missing
+      field.asyncOptions = asyncOptionsConfig
+    }
+  }
+
+  addFields(field, schema, originalSchema, strictInputType, asyncLoaders, formValues)
 
   return field
 }
