@@ -34,7 +34,7 @@ export interface Field {
     /**
      * Direct access to the loader function.
      * Call it with a context object containing formValues.
-     * 
+     *
      * @example
      * ```ts
      * // Simple usage
@@ -42,7 +42,7 @@ export interface Field {
      *   search: 'query',
      *   formValues: currentFormValues,
      * })
-     * 
+     *
      * // With pagination
      * const result = await field.asyncOptions.loader({
      *   search: 'query',
@@ -84,7 +84,7 @@ export interface Field {
       xl?: number
     }
   }
-  
+
   // Internal property to store root container layout information
   _rootLayout?: {
     type?: 'columns'
@@ -114,4 +114,4 @@ export interface FieldOption {
   [key: string]: unknown
 }
 
-export type FieldType = 'text' | 'number' | 'select' | 'file' | 'radio' | 'group-array' | 'email' | 'date' | 'checkbox' | 'fieldset' | 'money' | 'country' | 'textarea' | 'hidden'
+export type FieldType = 'text' | 'number' | 'select' | 'file' | 'radio' | 'group-array' | 'email' | 'date' | 'checkbox' | 'fieldset' | 'money' | 'country' | 'textarea' | 'hidden' | 'autocomplete'
