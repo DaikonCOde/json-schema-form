@@ -1,15 +1,15 @@
 {
-  "name": "@remoteoss/json-schema-form",
+  "name": "@laus/json-schema-form",
   "type": "module",
   "version": "1.2.4",
   "packageManager": "pnpm@9.15.2",
-  "description": "WIP V2 – Headless UI form powered by JSON Schemas",
-  "author": "Remote.com <engineering@remote.com> (https://remote.com/)",
+  "description": "Headless UI form powered by JSON Schemas",
+  "author": "laus",
   "license": "MIT",
-  "homepage": "https://json-schema-form.vercel.app/",
+  "homepage": "https://github.com/DaikonCOde/json-schema-form",
   "repository": {
     "type": "git",
-    "url": "https://github.com/remoteoss/json-schema-form.git"
+    "url": "https://github.com/DaikonCOde/json-schema-form.git"
   },
   "keywords": [
     "JSON",
