@@ -18,18 +18,35 @@ You can use it beyond UI Forms, like lists, tables, and any other UI that needs 
 
 ## Installation
 
-Available on [NPM](https://www.npmjs.com/package/@remoteoss/json-schema-form).
+Available on [NPM](https://www.npmjs.com/package/@laus/json-schema-form).
 
 ```bash
-npm install @remoteoss/json-schema-form
+npm install @laus/json-schema-form
 # or
 
-yarn install @remoteoss/json-schema-form
+yarn add @laus/json-schema-form
 ```
 
 ## Getting Started
 
 Check the 📚 **[JSF website](https://json-schema-form.vercel.app/)** for documentation.
+
+## Documentation
+
+### JSON Schema Reference
+
+For a complete reference of all supported JSON Schema keywords, custom extensions, and field types, see:
+
+📖 **[JSON Schema Reference Guide](SCHEMA.md)**
+
+This comprehensive guide includes:
+- Standard JSON Schema keywords (type, properties, validation, etc.)
+- Custom `x-jsf-*` extensions (presentation, layout, logic, etc.)
+- All supported input types and formats
+- JSON Logic operations for custom validations
+- Async options configuration
+- Complete field structure reference
+- Validation error types
 
 ### Playground
 
