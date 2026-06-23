@@ -8,7 +8,7 @@ import { calculateFinalSchema, updateFieldProperties } from './mutations'
 import { addCustomJsonLogicOperations, removeCustomJsonLogicOperations } from './validation/json-logic'
 import { validateSchema } from './validation/schema'
 
-export { LegacyOptions } from './validation/schema'
+export type { LegacyOptions } from './validation/schema'
 
 interface FormResult {
   fields: Field[]
