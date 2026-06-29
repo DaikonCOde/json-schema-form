@@ -1,4 +1,5 @@
 import type { ValidationError, ValidationErrorPath } from './errors'
+import type { Locale } from './errors/messages'
 import type { Field } from './field/type'
 import type { AsyncOptionsLoader, JsfLayoutConfig, JsfObjectSchema, JsfSchema, ObjectValue, SchemaValue } from './types'
 import type { LegacyOptions } from './validation/schema'
@@ -8,6 +9,7 @@ import { calculateFinalSchema, updateFieldProperties } from './mutations'
 import { addCustomJsonLogicOperations, removeCustomJsonLogicOperations } from './validation/json-logic'
 import { validateSchema } from './validation/schema'
 
+export type { Locale } from './errors/messages'
 export type { LegacyOptions } from './validation/schema'
 
 interface FormResult {
@@ -155,13 +157,13 @@ interface ValidationErrorWithMessage extends ValidationError {
  * @param errors - The validation errors
  * @returns The validation errors with error messages added
  */
-function addErrorMessages(errors: ValidationError[]): ValidationErrorWithMessage[] {
+function addErrorMessages(errors: ValidationError[], locale: Locale = 'en'): ValidationErrorWithMessage[] {
   return errors.map((error) => {
     const { schema, value, validation, customErrorMessage } = error
 
     return {
       ...error,
-      message: getErrorMessage(schema, value, validation, customErrorMessage),
+      message: getErrorMessage(schema, value, validation, customErrorMessage, locale),
     }
   })
 }
@@ -200,11 +202,11 @@ function applyCustomErrorMessages(errors: ValidationErrorWithMessage[], schema: 
  * @param schema - The schema to validate against
  * @returns The validation result
  */
-function validate(value: SchemaValue, schema: JsfSchema, options: LegacyOptions = {}): ValidationResult {
+function validate(value: SchemaValue, schema: JsfSchema, options: LegacyOptions = {}, locale: Locale = 'en'): ValidationResult {
   const result: ValidationResult = {}
   const errors = validateSchema(value, schema, options)
 
-  const errorsWithMessages = addErrorMessages(errors)
+  const errorsWithMessages = addErrorMessages(errors, locale)
   const processedErrors = applyCustomErrorMessages(errorsWithMessages, schema)
 
   const formErrors = validationErrorsToFormErrors(processedErrors)
@@ -239,7 +241,7 @@ export interface CreateHeadlessFormOptions {
   /**
    * Async option loaders for select fields.
    * Maps loader IDs (from schema's asyncOptions.id) to loader functions.
-   * 
+   *
    * @example
    * ```ts
    * {
@@ -251,6 +253,12 @@ export interface CreateHeadlessFormOptions {
    * ```
    */
   asyncLoaders?: Record<string, AsyncOptionsLoader>
+
+  /**
+   * Language for built-in validation error messages.
+   * @default 'en'
+   */
+  locale?: Locale
 }
 
 function buildFields(params: {
@@ -351,7 +359,7 @@ export function createHeadlessForm(
         options: options.legacyOptions,
       })
 
-      const result = validate(value, updatedSchema, options.legacyOptions)
+      const result = validate(value, updatedSchema, options.legacyOptions, options.locale)
 
       updateFieldProperties(fields, updatedSchema, schema)
 

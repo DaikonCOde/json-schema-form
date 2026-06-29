@@ -4,6 +4,7 @@ export {
   type CreateHeadlessFormOptions,
   type FormErrors,
   type LegacyOptions,
+  type Locale,
   type ValidationResult,
 } from './form'
 export { modifySchema as modify } from './modify-schema'
