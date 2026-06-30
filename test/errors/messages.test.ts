@@ -858,4 +858,82 @@ describe('validation error messages', () => {
       expect(form.handleValidation({ tags }).formErrors).toEqual({ tags: 'Must have at most 4 items' })
     })
   })
+
+  describe('i18n / locale', () => {
+    const schema: JsfObjectSchema = {
+      type: 'object',
+      properties: {
+        name: { type: 'string', minLength: 3 },
+        age: { type: 'number', minimum: 18 },
+        email: { type: 'string', format: 'email' },
+        status: { type: 'string', enum: ['active', 'inactive'] },
+        role: { type: 'string', const: 'user' },
+      },
+      required: ['name'],
+    }
+
+    it('defaults to English when no locale is provided', () => {
+      const form = createHeadlessForm(schema)
+
+      expect(form.handleValidation({}).formErrors).toMatchObject({ name: 'Required field' })
+      expect(form.handleValidation({ name: 'ab' }).formErrors).toMatchObject({
+        name: 'Please insert at least 3 characters',
+      })
+    })
+
+    it('uses English when locale is explicitly "en"', () => {
+      const form = createHeadlessForm(schema, { locale: 'en' })
+
+      expect(form.handleValidation({}).formErrors).toMatchObject({ name: 'Required field' })
+    })
+
+    it('translates field validation messages when locale is "es"', () => {
+      const form = createHeadlessForm(schema, { locale: 'es' })
+
+      expect(form.handleValidation({}).formErrors).toMatchObject({ name: 'Campo obligatorio' })
+
+      expect(
+        form.handleValidation({
+          name: 'ab',
+          age: 5,
+          email: 'not-an-email',
+          status: 'wrong',
+          role: 'admin',
+        }).formErrors,
+      ).toMatchObject({
+        name: 'Ingresá al menos 3 caracteres',
+        age: 'Tiene que ser mayor o igual a 18',
+        email: 'Ingresá un email válido',
+        status: 'La opción "wrong" no es válida.',
+        role: 'El único valor aceptado es "user".',
+      })
+    })
+
+    it('translates type error messages when locale is "es"', () => {
+      const typeSchema: JsfObjectSchema = {
+        type: 'object',
+        properties: {
+          string: { type: 'string' },
+          number: { type: 'number' },
+          boolean: { type: 'boolean' },
+          object: { type: 'object' },
+        },
+      }
+      const form = createHeadlessForm(typeSchema, { locale: 'es' })
+
+      expect(
+        form.handleValidation({
+          string: 123,
+          number: 'not a number',
+          boolean: 'not a boolean',
+          object: 'not an object',
+        }).formErrors,
+      ).toMatchObject({
+        string: 'El valor tiene que ser de tipo texto',
+        number: 'El valor tiene que ser de tipo número',
+        boolean: 'El valor tiene que ser de tipo booleano',
+        object: 'El valor tiene que ser de tipo objeto',
+      })
+    })
+  })
 })
