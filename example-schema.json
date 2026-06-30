@@ -1,0 +1,626 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "Complete User Registration Form",
+  "description": "Comprehensive example demonstrating all input types and features",
+  "x-jsf-layout": {
+    "type": "columns",
+    "columns": 2,
+    "gap": "1.5rem",
+    "responsive": {
+      "sm": 1,
+      "md": 2,
+      "lg": 2,
+      "xl": 3
+    }
+  },
+  "x-jsf-logic": {
+    "validations": {
+      "passwordStrength": {
+        "rule": {
+          "and": [
+            { ">=": [{ "var": "password.length" }, 8] },
+            {
+              "in": [
+                "(?=.*[A-Z])",
+                { "var": "password" }
+              ]
+            }
+          ]
+        },
+        "errorMessage": "Password must be at least 8 characters and contain at least one uppercase letter"
+      },
+      "ageVerification": {
+        "rule": { ">=": [{ "var": "personalInfo.age" }, 18] },
+        "errorMessage": "You must be at least 18 years old to register"
+      },
+      "salaryRange": {
+        "rule": {
+          "and": [
+            { ">=": [{ "var": "employment.expectedSalary" }, 20000] },
+            { "<=": [{ "var": "employment.expectedSalary" }, 500000] }
+          ]
+        },
+        "errorMessage": "Expected salary must be between $20,000 and $500,000"
+      },
+      "futureDate": {
+        "rule": {
+          ">": [
+            { "var": "employment.startDate" },
+            "2024-01-01"
+          ]
+        },
+        "errorMessage": "Start date must be after January 1, 2024"
+      }
+    },
+    "computedValues": {
+      "fullName": {
+        "rule": {
+          "concat": [
+            { "var": "personalInfo.firstName" },
+            " ",
+            { "var": "personalInfo.lastName" }
+          ]
+        }
+      },
+      "isAdult": {
+        "rule": { ">=": [{ "var": "personalInfo.age" }, 18] }
+      },
+      "ageCategory": {
+        "rule": {
+          "if": [
+            { "<": [{ "var": "personalInfo.age" }, 18] },
+            "Minor",
+            { "<": [{ "var": "personalInfo.age" }, 65] },
+            "Adult",
+            "Senior"
+          ]
+        }
+      },
+      "needsWorkVisa": {
+        "rule": {
+          "!=": [{ "var": "personalInfo.country" }, "US"]
+        }
+      },
+      "minStartDate": {
+        "rule": "2024-01-01"
+      }
+    }
+  },
+  "properties": {
+    "formType": {
+      "type": "string",
+      "const": "user-registration",
+      "x-jsf-presentation": {
+        "inputType": "hidden"
+      }
+    },
+    "personalInfo": {
+      "type": "object",
+      "title": "Personal Information",
+      "x-jsf-presentation": {
+        "inputType": "fieldset",
+        "description": "Please provide your personal details"
+      },
+      "x-jsf-layout": {
+        "colSpan": {
+          "sm": 1,
+          "md": 2,
+          "lg": 2,
+          "xl": 3
+        }
+      },
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "title": "First Name",
+          "minLength": 2,
+          "maxLength": 50,
+          "pattern": "^[A-Za-z]+$",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-jsf-errorMessage": {
+            "required": "First name is required",
+            "minLength": "First name must be at least 2 characters",
+            "pattern": "First name can only contain letters"
+          }
+        },
+        "lastName": {
+          "type": "string",
+          "title": "Last Name",
+          "minLength": 2,
+          "maxLength": 50,
+          "pattern": "^[A-Za-z]+$",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-jsf-errorMessage": {
+            "required": "Last name is required",
+            "minLength": "Last name must be at least 2 characters",
+            "pattern": "Last name can only contain letters"
+          }
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "title": "Email Address",
+          "x-jsf-presentation": {
+            "inputType": "email"
+          },
+          "x-jsf-errorMessage": {
+            "required": "Email is required",
+            "format": "Please enter a valid email address"
+          }
+        },
+        "age": {
+          "type": "integer",
+          "title": "Age",
+          "minimum": 13,
+          "maximum": 120,
+          "x-jsf-presentation": {
+            "inputType": "number"
+          },
+          "x-jsf-logic-validations": ["ageVerification"],
+          "x-jsf-errorMessage": {
+            "minimum": "You must be at least 13 years old",
+            "maximum": "Please enter a valid age"
+          }
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "format": "date",
+          "title": "Date of Birth",
+          "x-jsf-presentation": {
+            "inputType": "date",
+            "maxDate": "2010-12-31"
+          },
+          "x-jsf-errorMessage": {
+            "maxDate": "You must be born before 2011"
+          }
+        },
+        "country": {
+          "type": "string",
+          "title": "Country of Residence",
+          "x-jsf-presentation": {
+            "inputType": "autocomplete",
+            "asyncOptions": {
+              "id": "loadCountries",
+              "searchable": true,
+              "debounceMs": 300
+            }
+          },
+          "x-jsf-errorMessage": {
+            "required": "Please select your country"
+          }
+        },
+        "bio": {
+          "type": "string",
+          "title": "Biography",
+          "maxLength": 500,
+          "x-jsf-presentation": {
+            "inputType": "textarea",
+            "description": "Tell us about yourself (max 500 characters)"
+          },
+          "x-jsf-layout": {
+            "colSpan": 2
+          }
+        },
+        "gender": {
+          "type": "string",
+          "title": "Gender",
+          "oneOf": [
+            { "const": "male", "title": "Male" },
+            { "const": "female", "title": "Female" },
+            { "const": "other", "title": "Other" },
+            { "const": "prefer-not-to-say", "title": "Prefer not to say" }
+          ],
+          "x-jsf-presentation": {
+            "inputType": "radio"
+          }
+        },
+        "maritalStatus": {
+          "type": "string",
+          "title": "Marital Status",
+          "enum": ["single", "married", "divorced", "widowed"],
+          "x-jsf-presentation": {
+            "inputType": "select"
+          }
+        }
+      },
+      "required": ["firstName", "lastName", "email", "age", "dateOfBirth", "country"],
+      "x-jsf-order": [
+        "firstName",
+        "lastName",
+        "email",
+        "age",
+        "dateOfBirth",
+        "country",
+        "gender",
+        "maritalStatus",
+        "bio"
+      ]
+    },
+    "accountSettings": {
+      "type": "object",
+      "title": "Account Settings",
+      "x-jsf-presentation": {
+        "inputType": "fieldset"
+      },
+      "x-jsf-layout": {
+        "colSpan": {
+          "sm": 1,
+          "md": 2,
+          "lg": 2,
+          "xl": 3
+        }
+      },
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "minLength": 3,
+          "maxLength": 20,
+          "pattern": "^[a-z0-9_]+$",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-jsf-errorMessage": {
+            "pattern": "Username can only contain lowercase letters, numbers, and underscores"
+          }
+        },
+        "password": {
+          "type": "string",
+          "title": "Password",
+          "minLength": 8,
+          "x-jsf-presentation": {
+            "inputType": "text"
+          },
+          "x-jsf-logic-validations": ["passwordStrength"]
+        },
+        "newsletter": {
+          "type": "boolean",
+          "title": "Subscribe to newsletter",
+          "default": true,
+          "x-jsf-presentation": {
+            "inputType": "checkbox",
+            "description": "Receive updates and news via email"
+          }
+        },
+        "notifications": {
+          "type": "array",
+          "title": "Notification Preferences",
+          "items": {
+            "type": "string",
+            "enum": ["email", "sms", "push"]
+          },
+          "uniqueItems": true,
+          "x-jsf-presentation": {
+            "inputType": "checkbox"
+          }
+        },
+        "profileVisibility": {
+          "type": "string",
+          "title": "Profile Visibility",
+          "oneOf": [
+            { "const": "public", "title": "Public - Anyone can see" },
+            { "const": "friends", "title": "Friends Only" },
+            { "const": "private", "title": "Private - Only me" }
+          ],
+          "default": "friends",
+          "x-jsf-presentation": {
+            "inputType": "radio"
+          }
+        }
+      },
+      "required": ["username", "password"],
+      "x-jsf-order": ["username", "password", "profileVisibility", "newsletter", "notifications"]
+    },
+    "employment": {
+      "type": "object",
+      "title": "Employment Information",
+      "x-jsf-presentation": {
+        "inputType": "fieldset",
+        "description": "Tell us about your work experience"
+      },
+      "x-jsf-layout": {
+        "colSpan": {
+          "sm": 1,
+          "md": 2,
+          "lg": 2,
+          "xl": 3
+        }
+      },
+      "properties": {
+        "employmentStatus": {
+          "type": "string",
+          "title": "Employment Status",
+          "enum": ["employed", "self-employed", "unemployed", "student"],
+          "x-jsf-presentation": {
+            "inputType": "select"
+          }
+        },
+        "jobTitle": {
+          "type": "string",
+          "title": "Job Title",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          }
+        },
+        "companyName": {
+          "type": "string",
+          "title": "Company Name",
+          "x-jsf-presentation": {
+            "inputType": "text"
+          }
+        },
+        "expectedSalary": {
+          "type": "number",
+          "title": "Expected Annual Salary",
+          "minimum": 0,
+          "x-jsf-presentation": {
+            "inputType": "money",
+            "description": "Enter your expected annual salary in USD"
+          },
+          "x-jsf-logic-validations": ["salaryRange"]
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date",
+          "title": "Available Start Date",
+          "x-jsf-presentation": {
+            "inputType": "date"
+          },
+          "x-jsf-logic-computedAttrs": {
+            "x-jsf-presentation": {
+              "minDate": "minStartDate"
+            }
+          },
+          "x-jsf-logic-validations": ["futureDate"]
+        },
+        "workExperience": {
+          "type": "array",
+          "title": "Work Experience",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "properties": {
+              "position": {
+                "type": "string",
+                "title": "Position",
+                "x-jsf-presentation": {
+                  "inputType": "text"
+                }
+              },
+              "company": {
+                "type": "string",
+                "title": "Company",
+                "x-jsf-presentation": {
+                  "inputType": "text"
+                }
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date",
+                "title": "Start Date",
+                "x-jsf-presentation": {
+                  "inputType": "date"
+                }
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date",
+                "title": "End Date",
+                "x-jsf-presentation": {
+                  "inputType": "date"
+                }
+              },
+              "currentPosition": {
+                "type": "boolean",
+                "title": "I currently work here",
+                "x-jsf-presentation": {
+                  "inputType": "checkbox"
+                }
+              }
+            },
+            "required": ["position", "company", "startDate"]
+          },
+          "x-jsf-presentation": {
+            "inputType": "group-array"
+          },
+          "x-jsf-layout": {
+            "colSpan": 2
+          },
+          "x-jsf-errorMessage": {
+            "minItems": "Please add at least one work experience"
+          }
+        }
+      },
+      "required": ["employmentStatus"],
+      "x-jsf-order": [
+        "employmentStatus",
+        "jobTitle",
+        "companyName",
+        "expectedSalary",
+        "startDate",
+        "workExperience"
+      ],
+      "if": {
+        "properties": {
+          "employmentStatus": {
+            "enum": ["employed", "self-employed"]
+          }
+        }
+      },
+      "then": {
+        "required": ["employmentStatus", "jobTitle", "companyName", "expectedSalary"]
+      }
+    },
+    "documents": {
+      "type": "object",
+      "title": "Documents",
+      "x-jsf-presentation": {
+        "inputType": "fieldset",
+        "description": "Upload required documents"
+      },
+      "x-jsf-layout": {
+        "colSpan": {
+          "sm": 1,
+          "md": 2,
+          "lg": 2,
+          "xl": 3
+        }
+      },
+      "properties": {
+        "resume": {
+          "type": "string",
+          "format": "data-url",
+          "title": "Resume/CV",
+          "x-jsf-presentation": {
+            "inputType": "file",
+            "accept": ".pdf,.doc,.docx",
+            "maxFileSize": 5120,
+            "description": "Upload your resume (PDF or DOC, max 5MB)"
+          },
+          "x-jsf-errorMessage": {
+            "required": "Resume is required",
+            "maxFileSize": "Resume file must be less than 5MB",
+            "accept": "Only PDF and DOC files are allowed"
+          }
+        },
+        "coverLetter": {
+          "type": "string",
+          "format": "data-url",
+          "title": "Cover Letter",
+          "x-jsf-presentation": {
+            "inputType": "file",
+            "accept": ".pdf,.doc,.docx,.txt",
+            "maxFileSize": 3072,
+            "description": "Upload your cover letter (optional, max 3MB)"
+          }
+        },
+        "portfolio": {
+          "type": "string",
+          "format": "uri",
+          "title": "Portfolio URL",
+          "x-jsf-presentation": {
+            "inputType": "text",
+            "description": "Link to your online portfolio or website"
+          }
+        }
+      },
+      "required": ["resume"],
+      "x-jsf-order": ["resume", "coverLetter", "portfolio"]
+    },
+    "preferences": {
+      "type": "object",
+      "title": "Additional Preferences",
+      "x-jsf-presentation": {
+        "inputType": "fieldset"
+      },
+      "x-jsf-layout": {
+        "colSpan": {
+          "sm": 1,
+          "md": 2,
+          "lg": 2,
+          "xl": 3
+        }
+      },
+      "properties": {
+        "skills": {
+          "type": "array",
+          "title": "Skills",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "x-jsf-presentation": {
+            "inputType": "autocomplete",
+            "asyncOptions": {
+              "id": "loadSkills",
+              "searchable": true,
+              "debounceMs": 300
+            }
+          },
+          "x-jsf-layout": {
+            "colSpan": 2
+          }
+        },
+        "remoteWork": {
+          "type": "boolean",
+          "title": "Interested in remote work",
+          "default": false,
+          "x-jsf-presentation": {
+            "inputType": "checkbox"
+          }
+        },
+        "relocate": {
+          "type": "boolean",
+          "title": "Willing to relocate",
+          "default": false,
+          "x-jsf-presentation": {
+            "inputType": "checkbox"
+          }
+        },
+        "workVisa": {
+          "type": "boolean",
+          "title": "Requires work visa sponsorship",
+          "x-jsf-presentation": {
+            "inputType": "checkbox"
+          },
+          "x-jsf-logic-computedAttrs": {
+            "default": "needsWorkVisa"
+          }
+        }
+      },
+      "x-jsf-order": ["skills", "remoteWork", "relocate", "workVisa"]
+    },
+    "termsAndConditions": {
+      "type": "boolean",
+      "title": "I agree to the Terms and Conditions",
+      "const": true,
+      "x-jsf-presentation": {
+        "inputType": "checkbox",
+        "description": "You must agree to continue"
+      },
+      "x-jsf-layout": {
+        "colSpan": {
+          "sm": 1,
+          "md": 2,
+          "lg": 2,
+          "xl": 3
+        }
+      },
+      "x-jsf-errorMessage": {
+        "const": "You must agree to the Terms and Conditions to proceed"
+      }
+    },
+    "submittedBy": {
+      "type": "string",
+      "x-jsf-presentation": {
+        "inputType": "hidden"
+      },
+      "x-jsf-logic-computedAttrs": {
+        "default": "fullName"
+      }
+    }
+  },
+  "required": [
+    "personalInfo",
+    "accountSettings",
+    "employment",
+    "documents",
+    "termsAndConditions"
+  ],
+  "x-jsf-order": [
+    "formType",
+    "personalInfo",
+    "accountSettings",
+    "employment",
+    "documents",
+    "preferences",
+    "termsAndConditions",
+    "submittedBy"
+  ]
+}
