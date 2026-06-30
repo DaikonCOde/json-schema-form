@@ -29,6 +29,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "prepare": "tsup",
     "dev": "NODE_ENV=development tsup --watch",
     "dev:yalc": "concurrently \"npm dev\" \"nodemon\"",
     "test": "jest",
