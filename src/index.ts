@@ -3,6 +3,7 @@ export {
   createHeadlessForm,
   type CreateHeadlessFormOptions,
   type FormErrors,
+  type FormResult,
   type LegacyOptions,
   type Locale,
   type ValidationResult,

@@ -1,3 +1,63 @@
+#### 1.2.13 (2026-06-19)
+
+##### Bug Fixes
+
+* **json-logic:**  ensure custom operators are always available ([#260](https://github.com/remoteoss/json-schema-form/pull/260)) ([989bd102](https://github.com/remoteoss/json-schema-form/commit/989bd1025c1d694c0b7d9ecc75bb4d7da14bbd12))
+
+#### 1.2.12 (2026-05-25)
+
+##### Bug Fixes
+
+* Remove console.log in safeDeepClone ([#255](https://github.com/remoteoss/json-schema-form/pull/255)) ([f2769e3](https://github.com/remoteoss/json-schema-form/commit/f2769e3b0fb3e065573044424d6c8c92a35aa5f5))
+
+###### Chore
+
+* **security**: add zizmor to add static analysis for github actions ([#256](https://github.com/remoteoss/json-schema-form/pull/256)) ([0600423](https://github.com/remoteoss/json-schema-form/commit/06004237e7df9f0ae60382ed89d7be8069e633cf))
+
+
+#### 1.2.11 (2026-03-19)
+
+##### Bug Fixes
+
+* **modify:**  modify properties inside items array ([#251](https://github.com/remoteoss/json-schema-form/pull/251)) ([718af968](https://github.com/remoteoss/json-schema-form/commit/718af968e41151b014a8a45c20e775242f4b0b65))
+
+#### 1.2.10 (2026-03-05)
+
+##### Bug Fixes
+
+* **modify:** Stop modified array item fields being added to schema when missing in original schema ([#250](https://github.com/remoteoss/json-schema-form/pull/250)) ([85e694da](https://github.com/remoteoss/json-schema-form/commit/85e694da7ab24fadc0de7005923695357473e50e))
+
+#### 1.2.9 (2026-01-21)
+
+##### New Features
+
+*  Nested fieldsets conditionals & defaults support, json-logic `allOf` conditionals support ([#248](https://github.com/remoteoss/json-schema-form/pull/248)) ([a4e2b463](https://github.com/remoteoss/json-schema-form/commit/a4e2b46370293066ecc94724dd4e76b17a458a66))
+
+#### 1.2.8 (2025-12-02)
+
+##### Bug Fixes
+
+* **group-array:**  support default values ([#245](https://github.com/remoteoss/json-schema-form/pull/245)) ([d3044693](https://github.com/remoteoss/json-schema-form/commit/d3044693e0ddee3c1aaaea9bf81bc71398b1e71c))
+* **file:** Support validation for file like objects ([#246](https://github.com/remoteoss/json-schema-form/pull/246)) ([726a8b67](https://github.com/remoteoss/json-schema-form/commit/726a8b67e75bf9a5d0eddcb1297115442da79069))
+
+#### 1.2.7 (2025-11-21)
+
+##### Fixes
+
+* **typescript:** export FormResult and related types for better type inference ([#241](https://github.com/remoteoss/json-schema-form/pull/241)) ([a9fd050](https://github.com/remoteoss/json-schema-form/commit/a9fd050))
+
+#### 1.2.6 (2025-10-30)
+
+##### Chores
+
+* **performance:**  optimise field updates with large dropdown options ([#239](https://github.com/remoteoss/json-schema-form/pull/239)) ([272e0536](https://github.com/remoteoss/json-schema-form/commit/272e053697fd59cb3f9d4b01fa17236e2c411630))
+
+#### 1.2.5 (2025-10-21)
+
+##### Bug Fixes
+
+* **json-logic:**  apply custom validators when calculating the final schema ([#238](https://github.com/remoteoss/json-schema-form/pull/238)) ([15da4569](https://github.com/remoteoss/json-schema-form/commit/15da45690d26a7e525053564df06163962531505))
+
 #### 1.2.4 (2025-10-06)
 
 ##### Bug Fixes

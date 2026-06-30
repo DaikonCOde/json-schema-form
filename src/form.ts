@@ -12,7 +12,7 @@ import { validateSchema } from './validation/schema'
 export type { Locale } from './errors/messages'
 export type { LegacyOptions } from './validation/schema'
 
-interface FormResult {
+export interface FormResult {
   fields: Field[]
   isError: boolean
   error: string | null
@@ -321,6 +321,14 @@ function validateOptions(options: CreateHeadlessFormOptions) {
   }
 }
 
+/**
+ * JSON Logic uses a single global operators registry for all of its calls, so
+ * we need to take extra measures to keep each createHeadlessForm deterministic.
+ *
+ * addCustomJsonLogicOperations and removeCustomJsonLogicOperations are called on each
+ * createHeadlessForm and handleValidation in order to ensure each headless form's operators
+ * are limited to its schema and validations without side effects.
+ */
 export function createHeadlessForm(
   schema: JsfObjectSchema,
   options: CreateHeadlessFormOptions = {},
@@ -329,11 +337,16 @@ export function createHeadlessForm(
   const initialValues = options.initialValues || {}
   const strictInputType = options.strictInputType || false
   const asyncLoaders = options.asyncLoaders || {}
+  const customJsonLogicOps = options?.customJsonLogicOps
+
+  addCustomJsonLogicOperations(customJsonLogicOps)
+
+
   // Make a new version of the schema with all the computed attrs applied, as well as the final version of each property (taking into account conditional rules)
   const updatedSchema = calculateFinalSchema({
     schema,
     values: initialValues,
-    options: options.legacyOptions,
+    options,
   })
 
   const { fields, layout } = buildFields({
@@ -348,15 +361,13 @@ export function createHeadlessForm(
   const isError = false
 
   const handleValidation = (value: SchemaValue) => {
-    const customJsonLogicOps = options?.customJsonLogicOps
-
     try {
       addCustomJsonLogicOperations(customJsonLogicOps)
 
       const updatedSchema = calculateFinalSchema({
         schema,
         values: value,
-        options: options.legacyOptions,
+        options,
       })
 
       const result = validate(value, updatedSchema, options.legacyOptions, options.locale)
@@ -369,6 +380,8 @@ export function createHeadlessForm(
       removeCustomJsonLogicOperations(customJsonLogicOps)
     }
   }
+
+  removeCustomJsonLogicOperations(customJsonLogicOps)
 
   return {
     fields,

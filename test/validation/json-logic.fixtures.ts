@@ -1,4 +1,6 @@
-export function createSchemaWithRulesOnFieldA(rules) {
+import type { JsfObjectSchema, JsonLogicRules } from '../../src/types'
+
+export function createSchemaWithRulesOnFieldA(rules: NonNullable<JsonLogicRules['validations']>) {
   return {
     'properties': {
       field_a: {
@@ -14,7 +16,7 @@ export function createSchemaWithRulesOnFieldA(rules) {
   }
 }
 
-export function createSchemaWithThreePropertiesWithRuleOnFieldA(rules) {
+export function createSchemaWithThreePropertiesWithRuleOnFieldA(rules: NonNullable<JsonLogicRules['validations']>) {
   return {
     'properties': {
       field_a: {
@@ -746,6 +748,7 @@ export const schemaWithReduceAccumulator = {
 }
 
 export const schemaWithCustomValidationFunction = {
+  'type': 'object',
   'properties': {
     field_a: {
       'type': 'string',
@@ -758,6 +761,36 @@ export const schemaWithCustomValidationFunction = {
         errorMessage: 'Invalid hello world',
         rule: {
           is_hello: { var: 'field_a' },
+        },
+      },
+    },
+  },
+} as JsfObjectSchema
+
+export const schemaWithCustomComputedValueFunction = {
+  'properties': {
+    field_a: {
+      type: 'string',
+    },
+    field_b: {
+      'type': 'string',
+      'title': 'Field with computed description',
+      'x-jsf-logic-computedAttrs': {
+        description: 'Computed value is {{custom_function_result}}',
+      },
+    },
+  },
+  'x-jsf-logic': {
+    computedValues: {
+      custom_function_result: {
+        rule: {
+          if: [
+            {
+              is_hello: { var: 'field_a' },
+            },
+            'value1',
+            'value2',
+          ],
         },
       },
     },

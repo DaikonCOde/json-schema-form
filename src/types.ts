@@ -1,4 +1,4 @@
-import type { RulesLogic } from 'json-logic-js'
+import type { AdditionalOperation, RulesLogic } from 'json-logic-js'
 import type { JSONSchema } from 'json-schema-typed/draft-2020-12'
 import type { FieldType } from './field/type'
 /**
@@ -9,7 +9,7 @@ export type JsfSchemaType = Exclude<JSONSchema, boolean>['type']
 /**
  * Defines the type of a value in the form that will be validated against the schema.
  */
-export type SchemaValue = string | number | ObjectValue | null | undefined | Array<SchemaValue> | boolean
+export type SchemaValue = string | number | ObjectValue | null | undefined | Array<SchemaValue> | boolean | File
 
 /**
  * A nested object value.
@@ -163,13 +163,20 @@ export interface JsonLogicContext {
 export interface JsonLogicRules {
   validations?: Record<string, {
     errorMessage?: string
-    rule: RulesLogic
+    rule: RulesLogic<AdditionalOperation>
   }>
   computedValues?: Record<string, {
-    rule: RulesLogic
+    rule: RulesLogic<AdditionalOperation>
   }>
 }
-export interface JsonLogicRootSchema extends Pick<NonBooleanJsfSchema, 'if' | 'then' | 'else' | 'allOf' | 'anyOf' | 'oneOf' | 'not'> {}
+export type JsonLogicRootSchema = Pick<NonBooleanJsfSchema, 'if' | 'then' | 'else' | 'anyOf' | 'oneOf' | 'not'> & {
+  allOf?: (JsfSchema & { if?: JsonLogicIfNodeSchema })[]
+}
+
+export type JsonLogicIfNodeSchema = JsfSchema & {
+  validations?: Record<string, JsfSchema>
+  computedValues?: Record<string, JsfSchema>
+}
 
 export interface JsonLogicSchema extends JsonLogicRules, JsonLogicRootSchema {}
 
