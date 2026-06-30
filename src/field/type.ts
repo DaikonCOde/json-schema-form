@@ -1,4 +1,4 @@
-import type { AsyncOptionsConfig, AsyncOptionsLoader, JsfSchemaType, ObjectValue } from '../types'
+import type { AsyncOptionsConfig, AsyncOptionsLoader, JsfSchemaType } from '../types'
 
 /**
  * WIP type for UI field output that allows for all `x-jsf-presentation` properties to be splatted

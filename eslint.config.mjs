@@ -6,6 +6,7 @@ export default antfu({
     'v0/**',
     'scripts/**',
     'json-schema-test-suite/**',
+    'example-usage.js',
   ],
   markdown: false,
   modules: false,

@@ -57,7 +57,7 @@ describe('createHeadlessForm', () => {
         type: 'object',
         properties: {
           name: {
-            type: 'string',
+            'type': 'string',
             'x-jsf-presentation': {
               inputType: 'text',
             },

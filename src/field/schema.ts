@@ -457,12 +457,12 @@ export function buildFieldSchema({
   const originalSchemaPresentation = originalSchema['x-jsf-presentation'] || {}
   const schemaPresentation = schema['x-jsf-presentation'] || {}
   const presentation = deepmerge(originalSchemaPresentation, schemaPresentation, { arrayMerge: (_destinationArray, sourceArray, _options) => sourceArray })
-  
+
   // Handle layout configuration
   const originalLayoutConfig = originalSchema['x-jsf-layout']
   const schemaLayoutConfig = schema['x-jsf-layout']
   const layoutConfig = schemaLayoutConfig || originalLayoutConfig
-  
+
   const errorMessage = schema['x-jsf-errorMessage']
 
   // Get input type from presentation or fallback to schema type
@@ -519,12 +519,12 @@ export function buildFieldSchema({
   const asyncOptionsConfig = presentation.asyncOptions
   if (asyncOptionsConfig && asyncOptionsConfig.id) {
     const loader = asyncLoaders?.[asyncOptionsConfig.id]
-    
+
     if (loader !== undefined) {
       // Expose the loader directly for maximum flexibility
       field.asyncOptions = {
         ...asyncOptionsConfig,
-        loader,  // Direct access to the loader function
+        loader, // Direct access to the loader function
       }
     }
     else {

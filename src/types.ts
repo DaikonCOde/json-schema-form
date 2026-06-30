@@ -97,7 +97,7 @@ export interface AsyncOptionsLoaderContext {
  */
 export interface AsyncOptionsLoaderResult {
   /** Array of options to display */
-  options: Array<{ label: string; value: unknown; [key: string]: unknown }>
+  options: Array<{ label: string, value: unknown, [key: string]: unknown }>
   /** Optional pagination info for the next load */
   pagination?: AsyncOptionsPaginationInfo
 }
@@ -119,7 +119,7 @@ export interface AsyncOptionsConfig {
   id: string
   /** Optional parameters to pass to the loader (e.g., endpoint, filters) */
   params?: Record<string, unknown>
-  /** 
+  /**
    * Field names that this select depends on.
    * When these fields change, the options will be reloaded.
    */

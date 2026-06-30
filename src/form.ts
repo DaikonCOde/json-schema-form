@@ -341,7 +341,6 @@ export function createHeadlessForm(
 
   addCustomJsonLogicOperations(customJsonLogicOps)
 
-
   // Make a new version of the schema with all the computed attrs applied, as well as the final version of each property (taking into account conditional rules)
   const updatedSchema = calculateFinalSchema({
     schema,

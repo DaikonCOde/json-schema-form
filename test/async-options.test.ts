@@ -120,7 +120,7 @@ describe('Async Options', () => {
         },
       }
 
-      const loaderMock = jest.fn(async (context: AsyncOptionsLoaderContext) => {
+      const loaderMock = jest.fn(async (_context: AsyncOptionsLoaderContext) => {
         return {
           options: [
             { label: 'USA', value: 'us' },

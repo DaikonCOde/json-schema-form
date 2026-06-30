@@ -83,15 +83,15 @@ const form = createHeadlessForm({
       // Filter countries based on search
       const filtered = search
         ? COUNTRIES.filter(country =>
-            country.name.toLowerCase().includes(search.toLowerCase())
+            country.name.toLowerCase().includes(search.toLowerCase()),
           )
         : COUNTRIES
 
       return {
         options: filtered.map(country => ({
           label: country.name,
-          value: country.code
-        }))
+          value: country.code,
+        })),
       }
     },
 
@@ -107,17 +107,17 @@ const form = createHeadlessForm({
       // Filter skills based on search
       const filtered = search
         ? SKILLS.filter(skill =>
-            skill.toLowerCase().includes(search.toLowerCase())
+            skill.toLowerCase().includes(search.toLowerCase()),
           )
         : SKILLS
 
       return {
         options: filtered.map(skill => ({
           label: skill,
-          value: skill.toLowerCase().replace(/\s+/g, '-')
-        }))
+          value: skill.toLowerCase().replace(/\s+/g, '-'),
+        })),
       }
-    }
+    },
   },
 
   // Initial form values (optional)
@@ -132,14 +132,14 @@ const form = createHeadlessForm({
       country: '',
       bio: '',
       gender: '',
-      maritalStatus: ''
+      maritalStatus: '',
     },
     accountSettings: {
       username: '',
       password: '',
       newsletter: true,
       notifications: [],
-      profileVisibility: 'friends'
+      profileVisibility: 'friends',
     },
     employment: {
       employmentStatus: '',
@@ -147,21 +147,21 @@ const form = createHeadlessForm({
       companyName: '',
       expectedSalary: '',
       startDate: '',
-      workExperience: []
+      workExperience: [],
     },
     documents: {
       resume: '',
       coverLetter: '',
-      portfolio: ''
+      portfolio: '',
     },
     preferences: {
       skills: [],
       remoteWork: false,
       relocate: false,
-      workVisa: false
+      workVisa: false,
     },
-    termsAndConditions: false
-  }
+    termsAndConditions: false,
+  },
 })
 
 // Access form fields
@@ -176,14 +176,14 @@ function handleChange(fieldName, value) {
   // Update form values
   const updatedValues = {
     ...form.values,
-    [fieldName]: value
+    [fieldName]: value,
   }
 
   // Recreate form with new values (in real app, you'd use state management)
   const updatedForm = createHeadlessForm({
     schema: exampleSchema,
     asyncOptionsLoaders: form.asyncOptionsLoaders,
-    initialValues: updatedValues
+    initialValues: updatedValues,
   })
 
   console.log('Updated Form:', updatedForm)
@@ -195,7 +195,7 @@ function validateForm(values) {
   const validationForm = createHeadlessForm({
     schema: exampleSchema,
     asyncOptionsLoaders: form.asyncOptionsLoaders,
-    initialValues: values
+    initialValues: values,
   })
 
   const errors = validationForm.validate()
@@ -224,9 +224,9 @@ async function handleSubmit(values) {
     const response = await fetch('/api/register', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(values)
+      body: JSON.stringify(values),
     })
 
     if (!response.ok) {
@@ -237,7 +237,8 @@ async function handleSubmit(values) {
     console.log('Submission successful:', result)
 
     return result
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Submission error:', error)
     throw error
   }
@@ -348,7 +349,8 @@ function renderField(field) {
             `).join('')}
           </fieldset>
         `
-      } else {
+      }
+      else {
         // Single checkbox
         return `
           <label>
@@ -427,16 +429,16 @@ function renderField(field) {
 
 // Example: Print all fields with details
 console.log('\n=== FORM FIELDS BREAKDOWN ===\n')
-form.fields.forEach(field => {
+form.fields.forEach((field) => {
   console.log(`Field: ${field.name}`)
   console.log(`  Type: ${field.inputType}`)
   console.log(`  JSON Type: ${field.jsonType}`)
   console.log(`  Label: ${field.label}`)
   console.log(`  Required: ${field.required}`)
   console.log(`  Visible: ${field.isVisible}`)
-  if (field.description) console.log(`  Description: ${field.description}`)
-  if (field.options) console.log(`  Options: ${field.options.length} options`)
-  if (field.fields) console.log(`  Nested Fields: ${field.fields.length} fields`)
+  if (field.description) { console.log(`  Description: ${field.description}`) }
+  if (field.options) { console.log(`  Options: ${field.options.length} options`) }
+  if (field.fields) { console.log(`  Nested Fields: ${field.fields.length} fields`) }
   console.log('')
 })
 
@@ -444,7 +446,7 @@ form.fields.forEach(field => {
 export {
   form,
   handleChange,
-  validateForm,
   handleSubmit,
-  renderField
+  renderField,
+  validateForm,
 }
