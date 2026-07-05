@@ -23,6 +23,7 @@ export {
   type SchemaValue,
 } from './types'
 
+// [fork] layout system utilities (src/utils/layout.ts) — see MAINTAINING.md
 export {
   DEFAULT_LAYOUT_CONFIG,
   generateCSSGridProperties,

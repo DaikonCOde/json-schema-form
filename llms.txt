@@ -1,0 +1,182 @@
+# @laus/json-schema-form
+
+> Headless, framework-agnostic form library powered by JSON Schema. It turns a JSON Schema into a flat/nested list of `Field` descriptors plus a `handleValidation` function. It renders NO UI — you consume `fields` with React, Vue, Angular, Svelte, or plain JS and draw the inputs yourself. Fork of `@remoteoss/json-schema-form` adding: i18n error messages (`en`/`es`), async-loaded select options, and a responsive CSS-grid layout system.
+
+- ESM-only, TypeScript-first. Node >= 18.14.
+- Single entry point: `import { createHeadlessForm } from '@laus/json-schema-form'`.
+- The schema is extended with `x-jsf-*` keywords for UI hints, ordering, custom errors, and JSON Logic rules.
+- Validation is on-demand: you call `handleValidation(values)` and get back `{ formErrors }`.
+
+## Install
+
+```bash
+pnpm add @laus/json-schema-form
+# or: npm i @laus/json-schema-form  /  yarn add @laus/json-schema-form
+```
+
+## Quick start
+
+```ts
+import { createHeadlessForm } from '@laus/json-schema-form'
+
+const { fields, handleValidation } = createHeadlessForm({
+  type: 'object',
+  properties: {
+    name: { type: 'string', 'x-jsf-presentation': { inputType: 'text' } },
+    age: { type: 'number', minimum: 18 },
+  },
+  required: ['name'],
+})
+
+// `fields` -> render with your UI framework.
+// On submit / change:
+const { formErrors } = handleValidation({ name: '', age: 15 })
+// formErrors === { name: 'Required field', age: 'Must be greater or equal to 18' }
+```
+
+## API: createHeadlessForm(schema, options?)
+
+`function createHeadlessForm(schema: JsfObjectSchema, options?: CreateHeadlessFormOptions): FormResult`
+
+Primary entry point. Applies computed attributes + conditional rules, builds fields, wires JSON Logic operators per-form.
+
+### CreateHeadlessFormOptions
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `initialValues` | `SchemaValue` | `{}` | Values used to compute the initial schema/fields. |
+| `strictInputType` | `boolean` | `false` | Require `x-jsf-presentation.inputType` on every property. |
+| `legacyOptions` | `LegacyOptions` | `{}` | v0 compatibility flags: `treatNullAsUndefined`, `allowForbiddenValues`. |
+| `customJsonLogicOps` | `Record<string, (...args) => any>` | — | Custom JSON Logic operators (name → function). |
+| `asyncLoaders` | `Record<string, AsyncOptionsLoader>` | `{}` | **[fork]** Loader-id → loader fn, for async select options. |
+| `locale` | `'en' \| 'es'` | `'en'` | **[fork]** Language for built-in validation error messages. |
+
+### FormResult (return value)
+
+| Field | Type | Description |
+|---|---|---|
+| `fields` | `Field[]` | Field descriptors to render. |
+| `handleValidation` | `(value: SchemaValue) => { formErrors?: FormErrors }` | Validate values; recomputes conditional schema as a side effect. |
+| `isError` | `boolean` | Top-level error flag (currently always `false`). |
+| `error` | `string \| null` | Top-level error message. |
+| `layout` | `JsfLayoutConfig \| null` | **[fork]** Root layout from `x-jsf-layout`, if any. |
+
+`FormErrors` is a recursive map: `{ [field: string]: string | FormErrors | Array<null | FormErrors> }`. Schema-level errors use the `''` key.
+
+## API: modify(schema, config)
+
+`function modify(originalSchema, config): { schema, warnings }` (alias of `modifySchema`). Returns a NEW deep-cloned schema. Feed the result into `createHeadlessForm`.
+
+`config` fields:
+- `fields`: `Record<shortPath, Partial<JsfSchema> | (attrs) => output>` — edit fields by dotted path (`foo.bar`, `foo.items.bar`).
+- `allFields`: `(name, attrs) => modification` — applied to every field (recurses).
+- `create`: `Record<shortPath, modification>` — add new fields.
+- `pick`: `string[]` — keep only these fields (auto-re-adds conditional deps, warns).
+- `orderRoot`: `string[] | (order) => string[]` — reorder root fields.
+- `muteLogging`: `boolean`.
+
+```ts
+import { createHeadlessForm, modify } from '@laus/json-schema-form'
+
+const { schema } = modify(baseSchema, {
+  fields: { salary: { 'x-jsf-presentation': { inputType: 'money' } } },
+  orderRoot: ['name', 'salary'],
+})
+const form = createHeadlessForm(schema)
+```
+
+## [fork] i18n / locale
+
+Pass `locale` to translate built-in validation messages. `'en'` (default, upstream wording) and `'es'` (rioplatense Spanish) are supported. Custom per-field messages via `x-jsf-errorMessage` always win over the locale.
+
+```ts
+const form = createHeadlessForm(schema, { locale: 'es' })
+form.handleValidation({}).formErrors // -> { name: 'Campo obligatorio' }
+```
+
+Add a language: add one table in `src/i18n/index.ts` and extend the `Locale` union. No other file changes.
+
+## [fork] Async options (async-loaded selects)
+
+Declare `asyncOptions` in the field's `x-jsf-presentation`, then map its `id` to a loader in `options.asyncLoaders`.
+
+```ts
+const schema = {
+  type: 'object',
+  properties: {
+    country: {
+      type: 'string',
+      'x-jsf-presentation': {
+        inputType: 'select',
+        asyncOptions: { id: 'countries', searchable: true, paginated: true, debounceMs: 300 },
+      },
+    },
+  },
+}
+
+const form = createHeadlessForm(schema, {
+  asyncLoaders: {
+    countries: async ({ search, pagination, formValues, signal }) => {
+      const res = await fetch(`/api/countries?q=${search ?? ''}`, { signal })
+      const data = await res.json()
+      return { options: data.items, pagination: { page: 1, hasMore: data.hasMore } }
+    },
+  },
+})
+// The resolved field exposes field.asyncOptions.loader() for the UI to call.
+```
+
+Types: `AsyncOptionsConfig` (`id`, `params?`, `dependencies?`, `searchable?`, `paginated?`, `debounceMs?`), `AsyncOptionsLoader = (ctx) => Promise<AsyncOptionsLoaderResult>`, `AsyncOptionsLoaderContext` (`search?`, `pagination?`, `formValues`, `signal?`), `AsyncOptionsLoaderResult` (`options`, `pagination?`), `AsyncOptionsPaginationInfo` (`page`, `totalPages?`, `hasMore?`).
+
+## [fork] Layout system (responsive CSS grid)
+
+Declare `x-jsf-layout` on the root schema (container) or a field. Then generate CSS with the layout utilities.
+
+`JsfLayoutConfig`: `{ type?: 'columns'; columns?: number; gap?: string; responsive?: {sm,md,lg,xl}; colSpan?: number | {sm,md,lg,xl}; colStart?; colEnd? }`.
+
+Utilities (from package root):
+- `getFormContainerLayout(fields): JsfLayoutConfig | null` — root container layout.
+- `getFieldLayoutInfo(field): JsfLayoutConfig | null` — per-field layout.
+- `getRootLayoutInfo(field)`, `normalizeLayoutConfig(layout)`, `isValidLayoutConfig(x)`, `getBaseFieldValue(value)`.
+- `generateCSSGridProperties(layout): Record<string,string>` — inline grid styles.
+- `generateResponsiveCSS(layout, breakpoints?): string` — container media queries.
+- `generateResponsiveFieldCSS(layout, breakpoints?): string` — per-field media queries.
+- `DEFAULT_LAYOUT_CONFIG = { type: 'columns', columns: 1, gap: '16px' }`.
+
+```ts
+import { generateCSSGridProperties, getFormContainerLayout } from '@laus/json-schema-form'
+const layout = getFormContainerLayout(fields)
+const style = layout ? generateCSSGridProperties(layout) : {}
+```
+
+## Field descriptor
+
+Each `Field` (in `fields`) has: `name`, `label?`, `description?`, `type`/`inputType` (`FieldType`), `required`, `jsonType`, `isVisible`, `fields?` (nested), plus per-type extras (`options?`, `accept?`, `maxLength?`, `maxFileSize?`, `format?`, `const?`, `checkboxValue?`, `default?`, `errorMessage?`, `computedAttributes?`, `minDate?`/`maxDate?`, `asyncOptions?`, `layout?`). All `x-jsf-presentation` props splat onto the field.
+
+`FieldType` = `'text' | 'number' | 'select' | 'file' | 'radio' | 'group-array' | 'email' | 'date' | 'checkbox' | 'fieldset' | 'money' | 'country' | 'textarea' | 'hidden' | 'autocomplete'`.
+
+## x-jsf-* schema extensions
+
+| Keyword | Type | Purpose |
+|---|---|---|
+| `x-jsf-presentation` | object | UI hints: `inputType`, `description`, `accept`, `maxFileSize`, `minDate`, `maxDate`, `asyncOptions`, + any custom key. |
+| `x-jsf-order` | `string[]` | Field render order. |
+| `x-jsf-layout` | `JsfLayoutConfig` | **[fork]** Column/responsive layout. |
+| `x-jsf-errorMessage` | `Record<string,string>` | Custom error messages keyed by validation type. |
+| `x-jsf-logic` | object | JSON Logic `validations` + `computedValues` + conditional root schema. |
+| `x-jsf-logic-validations` | `string[]` | Extra validations referencing `x-jsf-logic`. |
+| `x-jsf-logic-computedAttrs` | `Record<string,string\|object>` | Computed attributes referencing `computedValues`. |
+
+## Full export list
+
+Functions/consts: `createHeadlessForm`, `modify`, `DEFAULT_LAYOUT_CONFIG`, `generateCSSGridProperties`, `generateResponsiveCSS`, `generateResponsiveFieldCSS`, `getBaseFieldValue`, `getFieldLayoutInfo`, `getFormContainerLayout`, `getRootLayoutInfo`, `isValidLayoutConfig`, `normalizeLayoutConfig`.
+
+Types: `Field`, `FieldType`, `CreateHeadlessFormOptions`, `FormErrors`, `FormResult`, `LegacyOptions`, `Locale`, `ValidationResult`, `AsyncOptionsConfig`, `AsyncOptionsLoader`, `AsyncOptionsLoaderContext`, `AsyncOptionsLoaderResult`, `AsyncOptionsPaginationInfo`, `JsfLayoutConfig`, `JsfObjectSchema`, `ResponsiveBreakpoints`, `ResponsiveFieldConfig`, `SchemaValue`.
+
+## More docs (in the repo)
+
+- `SCHEMA.md` — full JSON Schema keyword reference.
+- `docs/ASYNC_SELECT.md`, `docs/ASYNC_SELECT_QUICK_START.md` — async options deep dive.
+- `docs/LAYOUT_USAGE.md` — layout system guide.
+- `EXAMPLES.md` — end-to-end examples covering every input type.
+- `MIGRATING.md` — v0 → v1 migration.
