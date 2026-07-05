@@ -21,10 +21,10 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "files": [
+    "AGENTS.md",
     "README.md",
     "dist",
-    "llms.txt",
-    "AGENTS.md"
+    "llms.txt"
   ],
   "engines": {
     "node": ">=18.14.0"
