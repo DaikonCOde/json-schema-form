@@ -33,7 +33,7 @@
     "build": "tsup",
     "prepare": "tsup",
     "dev": "NODE_ENV=development tsup --watch",
-    "dev:yalc": "concurrently \"npm dev\" \"nodemon\"",
+    "dev:yalc": "concurrently \"pnpm dev\" \"nodemon\"",
     "test": "jest",
     "test:watch": "jest --watchAll",
     "test:file": "jest --runTestsByPath --watch",
