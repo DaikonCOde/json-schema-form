@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Package**: `@remoteoss/json-schema-form`
+**Package**: `@laus/json-schema-form`
 **Description**: A headless UI form library powered by JSON Schemas that transforms JSON schemas into JavaScript `fields` to be easily consumed by UI libraries.
 **Language**: TypeScript (ESM-only)
-**Maintained by**: Remote.com
+**Maintained by**: laus
 
 This library provides framework-agnostic form handling with validation, conditional logic, and computed values based on JSON Schema specifications.
+
+> **This is a fork of [`remoteoss/json-schema-form`](https://github.com/remoteoss/json-schema-form)** that adds three fork-only features: i18n validation messages (`en`/`es`), async-loaded select options, and a responsive CSS-grid layout system. The `v0/` legacy tree was removed. **Before adding features or syncing with upstream, read `MAINTAINING.md`** — it defines the discipline that keeps merge conflicts small (fork code lives in fork-only files; core files get a minimal `// [fork]` hook).
 
 ## Development Setup
 
@@ -19,7 +21,7 @@ This project **requires**:
 
 ```bash
 # Clone with submodules (includes json-schema-test-suite)
-git clone https://github.com/remoteoss/json-schema-form.git --recursive
+git clone https://github.com/DaikonCOde/json-schema-form.git --recursive
 
 # If already cloned without submodules
 git submodule update --init
@@ -46,11 +48,11 @@ pnpm lint               # ESLint code quality checks
 pnpm check              # Run both lint and typecheck
 ```
 
-### Testing Local Changes
-To test changes in a consumer project:
-1. Run `pnpm dev` to generate `dist/` folder with watch mode
-2. Option A: Import directly from dist: `import { createHeadlessForm } from '../../path/to/json-schema-form/dist'`
-3. Option B: Use `npm link` or `yarn link` to symlink the package
+### Testing Local Changes (yalc)
+`dist/` is **git-ignored** (not versioned); it is rebuilt on install via the `prepare` script. To test changes in a consumer project:
+1. In the consumer, link once: `yalc add @laus/json-schema-form`
+2. Manual push: `pnpm build && yalc push`
+3. Or watch mode: `pnpm dev:yalc` — rebuilds `dist/` on change and auto-runs `yalc push`
 
 ### Publishing (Maintainers Only)
 ```bash
@@ -94,8 +96,9 @@ Dynamic schema transformation based on form state:
 
 #### 5. Custom JSON Schema Extensions
 The library extends JSON Schema with `x-jsf-*` properties:
-- `x-jsf-presentation`: UI hints (inputType, description, placeholder, unit, etc.)
+- `x-jsf-presentation`: UI hints (inputType, description, placeholder, unit, `asyncOptions`, etc.)
 - `x-jsf-order`: Field ordering in UI
+- `x-jsf-layout`: **[fork]** Responsive column/grid layout config
 - `x-jsf-errorMessage`: Custom validation error messages per rule
 - `x-jsf-logic`: JSON Logic rules for validations and computed values
 - `x-jsf-logic-validations`: References to validation rules
@@ -104,22 +107,42 @@ The library extends JSON Schema with `x-jsf-*` properties:
 ### Field Types Supported
 - Text inputs: `text`, `textarea`, `email`, `hidden`
 - Numeric: `number`, `money`
-- Selection: `select`, `radio`, `checkbox`
+- Selection: `select`, `radio`, `checkbox`, `autocomplete`
 - Other: `date`, `file`, `country`
 - Structural: `fieldset`, `group-array`
 
-### Layout System (`src/utils/layout.ts`)
+### Layout System (`src/utils/layout.ts`) — [fork]
 Provides responsive CSS Grid-based layout generation for forms:
 - `generateCSSGridProperties()`: Generates CSS Grid styles
 - `getFormContainerLayout()`: Root container layout configuration
 - `getFieldLayoutInfo()`: Individual field layout metadata
 - Support for responsive breakpoints and column spans
 
+### i18n / Validation Messages (`src/i18n/`) — [fork]
+Built-in validation error messages are localized. `src/i18n/index.ts` holds the
+per-locale message tables (`en` default, `es`) and `getTable()`. `src/errors/messages.ts`
+keeps only `getErrorMessage()`, which reads the table for `options.locale`. Add a
+language = add one table + extend the `Locale` union. Nothing else changes.
+
+### Async Options (`asyncLoaders`) — [fork]
+Select fields can load options asynchronously: declare `x-jsf-presentation.asyncOptions`
+in the schema and map its `id` to a loader in `options.asyncLoaders`. Async/layout types
+live in `src/types-ext.ts` (fork-only), re-exported from `src/types.ts`. Loading logic is
+threaded through `src/field/schema.ts` and `src/form.ts`.
+
+### Fork-only modules (keep fork code here, not in core files)
+- `src/i18n/` — locale message tables
+- `src/types-ext.ts` — async-options + layout types
+- `src/utils/layout.ts` — layout utilities
+- `test/async-options.test.ts` — async-options tests
+
+See `MAINTAINING.md` for the full fork/upstream contact map and sync workflow.
+
 ## Testing Philosophy
 
-1. **JSON Schema Test Suite**: The `json-schema-test-suite` submodule provides official JSON Schema compliance tests
-2. **V0 Compatibility**: Tests from v0 are preserved to ensure backward compatibility via `legacyOptions`
-3. **Test Organization**: Tests mirror `src/` structure in `test/` directory
+1. **JSON Schema Test Suite**: The `json-schema-test-suite` submodule provides official JSON Schema compliance tests (requires `git submodule update --init`)
+2. **V0 Compatibility**: The `legacyOptions` API is preserved for backward compatibility (the `v0/` source tree itself was removed in this fork)
+3. **Test Organization**: Tests mirror `src/` structure in `test/` directory. Fork features have their own files (`test/async-options.test.ts`, i18n cases in `test/errors/messages.test.ts`)
 
 ## Legacy Support
 
@@ -127,7 +150,7 @@ The library maintains backward compatibility with v0 through `legacyOptions`:
 - `treatNullAsUndefined`: Treat null values as undefined (v0 bug behavior)
 - `allowForbiddenValues`: Allow values against schema `false` (v0 bug behavior)
 
-v0 code still exists in the repo under `v0/` directory for reference during migration.
+Note: the `v0/` source directory was removed in this fork; only the `legacyOptions` API remains.
 
 ## Important Development Notes
 
@@ -163,14 +186,18 @@ fix(validation): correct null handling in schema
 - **`src/validation/schema.ts`**: Main validation engine
 - **`src/mutations.ts`**: Dynamic schema transformation logic
 - **`src/modify-schema.ts`**: Schema modification utilities (`modify()` function)
-- **`src/errors/messages.ts`**: Error message generation
+- **`src/errors/messages.ts`**: Error message generation (reads locale tables via `getErrorMessage()`)
+- **`src/i18n/index.ts`**: [fork] Locale message tables + `getTable()`
+- **`src/types-ext.ts`**: [fork] Async-options + layout type definitions
 
 ## Documentation
 
-- Live docs: https://json-schema-form.vercel.app/
-- Playground: https://json-schema-form.vercel.app/?path=/docs/playground--docs
+- **`MAINTAINING.md`**: Fork/upstream sync workflow + contact map (read before syncing or adding features)
+- **`llms.txt`**: Full public API reference for AI agents consuming the library (ships in the package)
+- **`AGENTS.md`**: How-to-implement rules for AI agents consuming the library (ships in the package)
 - Migration guide: See `MIGRATING.md` for v0→v1 migration details
+- JSON Schema reference: See `SCHEMA.md`
+- Examples: See `EXAMPLES.md`
 - Async select feature: See `docs/ASYNC_SELECT.md` and `docs/ASYNC_SELECT_QUICK_START.md`
 - Layout system: See `docs/LAYOUT_USAGE.md`
-
-Note: Documentation source code is not in this repo (still coupled to Remote's internal Design System).
+- Upstream live docs (remoteoss): https://json-schema-form.vercel.app/
