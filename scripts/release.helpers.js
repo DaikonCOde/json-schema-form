@@ -82,9 +82,9 @@ async function revertCommit({ newVersion, main } = {}) {
     console.log('🚨 Be sure of your actions as you are in the main branch!');
   }
   console.log("- Run 'git reset HEAD~1' to revert the last commit");
-  console.log(`- Run 'git tag -d v${version}' to delete the tag locally`);
+  console.log(`- Run 'git tag -d ${version}' to delete the tag locally`);
   console.log(
-    `- Then run 'git push -f && git push --delete origin v${version}' to force the deletion of those.`
+    `- Then run 'git push -f && git push --delete origin ${version}' to force the deletion of those.`
   );
 }
 
