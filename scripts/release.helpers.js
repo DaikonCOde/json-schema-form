@@ -17,11 +17,9 @@ async function checkNpmAuth() {
   try {
     const result = await runExec('npm whoami');
     const username = result.stdout.toString().trim();
-    if (username !== 'remoteoss') {
-      console.log('🟠 You need to be logged to NPM as "remoteoss". Run "npm adduser"');
-      process.exit(1);
-    }
+    console.log(`🟢 Logged in to NPM as "${username}". Make sure this account can publish to the @laus org.`);
   } catch (e) {
+    console.log('🟠 You are not logged in to NPM. Run "npm login" first.');
     process.exit(1);
   }
 }

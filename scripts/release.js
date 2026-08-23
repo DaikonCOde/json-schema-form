@@ -109,7 +109,7 @@ async function getNewVersion() {
     // If no official version found, use v0.0.0 as the starting point
     const latestOfficialVersion = latestOfficialTag
       ? semver.coerce(latestOfficialTag).version
-      : '0.0.0';
+      : currentVersion;
 
 
     return semver.inc(latestOfficialVersion, bumpType);
@@ -172,7 +172,7 @@ async function publish({ newVersion, releaseType, otp }) {
     if (releaseType === 'official') {
       console.log(`✍️ REMINDER: Please publish the release on Github too.`);
     }
-    console.log(`Install with: npm i @remoteoss/json-schema-form@${npmTag}`);
+    console.log(`Install with: npm i ${packageJson.name}@${npmTag}`);
   } catch {
     console.log('🚨 Publish failed! Perhaps the OTP is wrong.');
     await revertCommit({ newVersion });
