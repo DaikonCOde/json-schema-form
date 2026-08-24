@@ -5,11 +5,9 @@ import { readFileSync } from 'fs';
 
 import {
   askForConfirmation,
-  askForText,
   checkGitStatus,
   checkNpmAuth,
   runExec,
-  revertCommit,
   revertChanges,
   getDateYYYYMMDDHHMMSS,
 } from './release.helpers.js';
@@ -148,35 +146,31 @@ async function gitCommit({ newVersion, releaseType }) {
   await runExec(cmd);
 }
 
-async function publish({ newVersion, releaseType, otp }) {
+async function publish({ newVersion, releaseType }) {
   console.log('Publishing new version...');
   const npmTag = releaseType === 'official' ? 'latest' : `v1-${releaseType}`;
   const originalVersion = packageJson.version;
 
-  try {
-    // Publish with the dev/beta version
-    const cmd = `npm publish --access=public --tag=${npmTag} --otp=${otp}`;
-    await runExec(cmd);
+  // Publish first, with no git changes committed yet. If this throws, init()
+  // aborts before anything is committed/tagged/pushed - nothing to revert.
+  const cmd = `npm publish --access=public --tag=${npmTag}`;
+  await runExec(cmd);
 
-    // For dev releases, revert package.json back to original version
-    if (releaseType === 'dev') {
-      const revertCmd = `npm version --no-git-tag-version ${originalVersion}`;
-      await runExec(revertCmd);
-    }
-
-    console.log(`🎉 ${npmTag} version ${newVersion} published!`);
-    if (releaseType === 'beta') {
-      console.log(`✍️ REMINDER: Please publish the release on Github too as "pre-release".`);
-    }
-
-    if (releaseType === 'official') {
-      console.log(`✍️ REMINDER: Please publish the release on Github too.`);
-    }
-    console.log(`Install with: npm i ${packageJson.name}@${npmTag}`);
-  } catch {
-    console.log('🚨 Publish failed! Perhaps the OTP is wrong.');
-    await revertCommit({ newVersion });
+  // For dev releases, revert package.json back to original version
+  if (releaseType === 'dev') {
+    const revertCmd = `npm version --no-git-tag-version ${originalVersion}`;
+    await runExec(revertCmd);
   }
+
+  console.log(`🎉 ${npmTag} version ${newVersion} published!`);
+  if (releaseType === 'beta') {
+    console.log(`✍️ REMINDER: Please publish the release on Github too as "pre-release".`);
+  }
+
+  if (releaseType === 'official') {
+    console.log(`✍️ REMINDER: Please publish the release on Github too.`);
+  }
+  console.log(`Install with: npm i ${packageJson.name}@${npmTag}`);
 }
 
 async function init() {
@@ -209,10 +203,19 @@ async function init() {
   }
 
   await build();
-  const otp = await askForText('🔐 What is the NPM Auth OTP? (Check 1PW) ');
+
+  try {
+    // Publish before touching git: if this fails, nothing has been
+    // committed/tagged/pushed yet, so there's nothing to revert on the git side.
+    await publish({ newVersion, releaseType });
+  } catch (e) {
+    console.log('🚨 Publish failed!', e.message);
+    console.log('🟠 package.json (and CHANGELOG.md, if updated) were bumped locally but nothing was committed.');
+    console.log(`   Run 'git checkout -- package.json${releaseType !== 'dev' ? ' CHANGELOG.md' : ''}' to discard the version bump, then try again.`);
+    process.exit(1);
+  }
 
   await gitCommit({ newVersion, releaseType });
-  await publish({ newVersion, releaseType, otp });
 }
 
 init();
